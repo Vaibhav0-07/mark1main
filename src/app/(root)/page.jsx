@@ -1,5 +1,6 @@
 "use client";
 import ProjectsForm from '@/modules/home/components/project-form'
+import ProjectList from '@/modules/home/components/project-list';
 import { ImageConfigContext } from 'next/dist/shared/lib/image-config-context.shared-runtime'
 import Image from 'next/image'
 import React from 'react'
@@ -26,6 +27,7 @@ const Page = () => {
           <div className='max-w-3xl w-full'>
             <ProjectsForm/>
           </div>
+          <ProjectList/>
         </section>
       </div>
     </div>
