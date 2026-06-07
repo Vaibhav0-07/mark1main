@@ -23,7 +23,8 @@ export const codeAgentFunction = inngest.createFunction(
   async ({ event, step }) => {
     // Step-1
     const sandboxId = await step.run("get-sandbox-id", async () => {
-      const sandbox = await Sandbox.create("v0-nextjs-build-new");
+      const sandbox = await Sandbox.create("v0-nextjs-build-new", {
+      timeoutMs: 15 * 60 * 1000});
       return sandbox.sandboxId;
     });
 
@@ -222,30 +223,60 @@ export const codeAgentFunction = inngest.createFunction(
       result.state.data.summary
     )
 
-    const generateFragmentTitle = ()=>{
-      if(fragmentTitleOutput[0].type !=="text"){
-        return "Untitled"
-      }
+    // const generateFragmentTitle = ()=>{
+    //   if(fragmentTitleOutput[0].type !=="text"){
+    //     return "Untitled"
+    //   }
 
-      if(Array.isArray(fragmentTitleOutput[0].content)){
-            return fragmentTitleOutput[0].content.map((c) => c).join("");
-      }
-      else{
-        return fragmentTitleOutput[0].content
-      }
-    }
+    //   if(Array.isArray(fragmentTitleOutput[0].content)){
+    //         return fragmentTitleOutput[0].content.map((c) => c).join("");
+    //   }
+    //   else{
+    //     return fragmentTitleOutput[0].content
+    //   }
+    // }
 
-    const generateResponse = ()=>{
-       if (responseOutput[0].type !== "text") {
-        return "Here you go";
-      }
+    const generateFragmentTitle = () => {
+      const msg = fragmentTitleOutput.find(m => m.type === "text" && !m.thought)
+      ?? fragmentTitleOutput[fragmentTitleOutput.length - 1];
 
-      if (Array.isArray(responseOutput[0].content)) {
-        return responseOutput[0].content.map((c) => c).join("");
-      } else {
-        return responseOutput[0].content;
+      if (!msg || msg.type !== "text") return "Untitled";
+
+      if (Array.isArray(msg.content)) {
+        return msg.content
+          .filter(c => !c.thought)
+          .map(c => (typeof c === "string" ? c : c.text ?? ""))
+          .join("").trim() || "Untitled";
       }
-    }
+      return msg.content?.trim() || "Untitled";
+    };
+
+    // const generateResponse = ()=>{
+    //    if (responseOutput[0].type !== "text") {
+    //     return "Here you go";
+    //   }
+
+    //   if (Array.isArray(responseOutput[0].content)) {
+    //     return responseOutput[0].content.map((c) => c).join("");
+    //   } else {
+    //     return responseOutput[0].content;
+    //   }
+    // }
+
+    const generateResponse = () => {
+      const msg = responseOutput.find(m => m.type === "text" && !m.thought)
+      ?? responseOutput[responseOutput.length - 1];
+
+      if (!msg || msg.type !== "text") return "Here you go";
+
+      if (Array.isArray(msg.content)) {
+        return msg.content
+        .filter(c => !c.thought)
+        .map(c => (typeof c === "string" ? c : c.text ?? ""))
+        .join("").trim() || "Here you go";
+      }
+      return msg.content?.trim() || "Here you go";
+    };
 
     const isError =
       !result.state.data.summary ||
